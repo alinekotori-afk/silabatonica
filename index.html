@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório de Sílabas Tônicas</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .mic-active {
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.610, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .sound-wave {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            height: 20px;
+        }
+        .sound-wave span {
+            display: block;
+            width: 3px;
+            height: 100%;
+            background-color: #ef4444;
+            border-radius: 2px;
+            animation: bounce 0.8s ease-in-out infinite alternate;
+        }
+        .sound-wave span:nth-child(2) { animation-delay: 0.15s; }
+        .sound-wave span:nth-child(3) { animation-delay: 0.3s; }
+        .sound-wave span:nth-child(4) { animation-delay: 0.45s; }
+        .sound-wave span:nth-child(5) { animation-delay: 0.6s; }
+        @keyframes bounce {
+            0% { height: 4px; }
+            100% { height: 20px; }
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <header class="border-b border-slate-800 bg-slate-950/50 backdrop-blur sticky top-0 z-40 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-600/30">
+                    <i class="fa-solid fa-volume-high text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Laboratório de Sílabas Tônicas</h1>
+                    <p class="text-xs text-slate-400">Pratique o ritmo e o estresse (Word Stress) do Português Brasileiro</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700/50 flex items-center gap-2">
+                    <span class="text-xs text-slate-400">Aproveitamento:</span>
+                    <span id="score-text" class="text-sm font-bold text-indigo-400">0%</span>
+                </div>
+                <div class="bg-slate-800/80 px-4 py-2 rounded-xl border border-slate-700/50 flex items-center gap-2">
+                    <span class="text-xs text-slate-400">Progresso:</span>
+                    <span id="progress-count" class="text-sm font-bold text-emerald-400">0/0</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- SIDEBAR: Category Selector -->
+        <aside class="lg:col-span-4 bg-slate-950/40 rounded-2xl border border-slate-800/80 p-5 flex flex-col h-[calc(100vh-140px)] overflow-hidden">
+            <div class="mb-4">
+                <h2 class="text-sm font-bold text-indigo-400 uppercase tracking-wider">Módulos de Tônica</h2>
+                <p class="text-xs text-slate-400">Selecione onde cai o "stress" da palavra</p>
+            </div>
+            
+            <div id="category-list" class="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                <!-- Categories will be injected dynamically here -->
+            </div>
+        </aside>
+
+        <!-- MAIN LAB AREA: Interactive Card and Recorder -->
+        <section class="lg:col-span-8 flex flex-col gap-6">
+            
+            <!-- STAGE CARD -->
+            <div class="bg-gradient-to-b from-slate-950 to-slate-900 rounded-2xl border border-slate-800 p-6 md:p-8 relative overflow-hidden flex-1 flex flex-col justify-between">
+                <!-- Watermark Background -->
+                <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none text-[150px] font-black">sílaba</div>
+
+                <div class="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800/80 pb-4 mb-6 gap-4">
+                    <div class="flex items-center gap-2">
+                        <span id="word-category-badge" class="bg-indigo-950/60 text-indigo-400 border border-indigo-900/50 text-xs px-3 py-1 rounded-full font-semibold">Categoria</span>
+                        <span id="word-index-badge" class="text-xs text-slate-500">Item 0 de 0</span>
+                    </div>
+                </div>
+
+                <!-- Rule Summary Box -->
+                <div class="bg-indigo-900/20 border border-indigo-800/50 rounded-xl p-4 mb-6">
+                    <div class="flex gap-3">
+                        <i class="fa-solid fa-book-open text-indigo-400 mt-1"></i>
+                        <div>
+                            <h3 class="text-sm font-bold text-indigo-300 mb-1">Regra de Ouro: <span id="rule-title">Título</span></h3>
+                            <p id="rule-description" class="text-xs text-slate-300 leading-relaxed">
+                                Descrição da regra de acentuação aparecerá aqui.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Word Display Container -->
+                <div class="text-center my-auto py-4">
+                    <h2 id="target-word" class="text-5xl md:text-7xl font-extrabold tracking-tight text-white mb-2">Selecione</h2>
+                    <p id="word-translation" class="text-lg text-slate-400 font-medium italic mb-6">Tradução e fonética</p>
+                    
+                    <!-- Syllable breakdown / Hint -->
+                    <div class="inline-flex items-center gap-2 bg-slate-800/40 border border-slate-700/40 px-4 py-2.5 rounded-2xl max-w-lg mx-auto text-left">
+                        <i class="fa-solid fa-bullseye text-indigo-400 flex-shrink-0"></i>
+                        <p id="word-tip" class="text-sm text-slate-200 font-bold tracking-widest uppercase">
+                            se-pa-ra-ção
+                        </p>
+                    </div>
+                </div>
+
+                <!-- TTS and Voice Actions -->
+                <div class="border-t border-slate-800/80 pt-6 mt-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <button id="btn-listen" class="flex-1 sm:flex-initial bg-slate-800 hover:bg-slate-700 text-white font-semibold px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-700 shadow-lg active:scale-95">
+                            <i id="listen-icon" class="fa-solid fa-volume-high text-indigo-400"></i>
+                            <span>Ouvir Pronúncia</span>
+                        </button>
+                    </div>
+
+                    <div class="flex items-center gap-4 w-full sm:w-auto">
+                        <button id="btn-record" class="flex-1 sm:flex-initial bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-3 rounded-xl transition-all flex items-center justify-center gap-3 shadow-lg shadow-red-900/30 active:scale-95">
+                            <i class="fa-solid fa-microphone text-lg"></i>
+                            <span id="record-text">Gravar Palavra</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FEEDBACK AREA -->
+            <div id="feedback-panel" class="bg-slate-950/60 rounded-2xl border border-slate-800 p-5 min-h-[140px] flex flex-col justify-center transition-all duration-300">
+                <div id="feedback-state-empty" class="text-center py-4">
+                    <i class="fa-solid fa-waveform text-3xl text-slate-700 mb-2"></i>
+                    <p class="text-sm text-slate-500">Clique em "Gravar Palavra". Após a fala, você poderá se ouvir.</p>
+                </div>
+
+                <!-- Active Recording Wave -->
+                <div id="feedback-state-recording" class="hidden flex flex-col items-center justify-center py-4 gap-3">
+                    <div class="sound-wave">
+                        <span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                    <p class="text-xs text-red-400 animate-pulse font-medium">Gravando seu áudio... Fale agora!</p>
+                </div>
+
+                <!-- Feedback Results -->
+                <div id="feedback-state-result" class="hidden flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+                    <div class="flex items-start gap-4 flex-1">
+                        <div id="result-badge" class="p-3 rounded-xl text-2xl flex-shrink-0">
+                            <!-- Injected icon -->
+                        </div>
+                        <div class="space-y-2">
+                            <h3 id="result-title" class="font-bold text-lg">Resultado</h3>
+                            <p class="text-sm text-slate-400">O que a IA ouviu: <span id="user-transcript" class="text-slate-100 font-bold underline decoration-indigo-500">...</span></p>
+                            <p id="accuracy-tip" class="text-xs text-slate-300 leading-relaxed">Dica...</p>
+                            
+                            <!-- NEW: Playback own audio button -->
+                            <button id="btn-play-own-audio" class="mt-2 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border border-emerald-800 transition-colors hidden">
+                                <i class="fa-solid fa-play"></i> Ouvir minha gravação
+                            </button>
+                        </div>
+                    </div>
+                    <button id="btn-ai-coach" class="bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white px-4 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 border border-slate-700 transition-colors shrink-0">
+                        <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i>
+                        <span>Dica da IA</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- NAVIGATION BUTTONS -->
+            <div class="flex items-center justify-between gap-4">
+                <button id="btn-prev" class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-arrow-left"></i> Anterior
+                </button>
+                <button id="btn-next" class="bg-slate-800 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed border border-slate-700 px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center gap-2">
+                    Próxima <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 py-4 px-6 text-center text-xs text-slate-500 bg-slate-950/20">
+        <p>© 2026 Laboratório de Sílabas Tônicas. Integrado com a API Gemini.</p>
+    </footer>
+
+    <!-- AI EXPLANATION DRAWER / MODAL -->
+    <div id="ai-drawer" class="fixed inset-y-0 right-0 w-full max-w-md bg-slate-950 border-l border-slate-800 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-50 flex flex-col hidden">
+        <div class="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles text-indigo-400 text-lg"></i>
+                <h3 class="font-bold text-lg text-white">Treinador de Pronúncia IA</h3>
+            </div>
+            <button id="btn-close-drawer" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div class="bg-indigo-950/30 border border-indigo-900/40 p-4 rounded-2xl">
+                <p id="drawer-word-label" class="text-sm text-indigo-300 font-bold mb-1">Palavra (Tônica Destacada):</p>
+                <p id="drawer-word-text" class="text-2xl font-black text-white tracking-widest uppercase">me-TRÔ</p>
+            </div>
+            <div class="space-y-3">
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Como aplicar o stress (Tônica):</h4>
+                <div id="drawer-loading" class="hidden flex flex-col items-center justify-center py-10 gap-3">
+                    <i class="fa-solid fa-circle-notch text-3xl text-indigo-500 animate-spin"></i>
+                    <p class="text-xs text-slate-400">Consultando a IA...</p>
+                </div>
+                <div id="drawer-content" class="text-sm text-slate-300 space-y-3 leading-relaxed">
+                    <!-- Dynamic details -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Database structured for Word Stress (Sílabas Tônicas)
+        const pronunciationDatabase = {
+            "oxitonas": {
+                title: "Oxítonas",
+                rule: "A <strong>última sílaba</strong> é a mais forte (tônica). São acentuadas graficamente as palavras terminadas em: A(S), E(S), O(S), EM, ENS, e ditongos abertos ÉI, ÉU, ÓI.",
+                words: [
+                    { word: "Metrô", translation: "subway", ipa: "me.ˈtɾo", hint: "me-TRÔ" },
+                    { word: "Suflê", translation: "soufflé", ipa: "su.ˈfle", hint: "su-FLÊ" },
+                    { word: "Supor", translation: "to suppose", ipa: "su.ˈpoʁ", hint: "su-POR (Terminada em R, não leva acento, mas é oxítona)" },
+                    { word: "Sabiá", translation: "thrush (bird)", ipa: "sa.bi.ˈa", hint: "sa-bi-Á" },
+                    { word: "Bebê", translation: "baby", ipa: "be.ˈbe", hint: "be-BÊ" },
+                    { word: "Avó", translation: "grandmother", ipa: "a.ˈvɔ", hint: "a-VÓ (Vogal O aberta)" },
+                    { word: "Armazém", translation: "warehouse", ipa: "aʁ.ma.ˈzẽj", hint: "ar-ma-ZÉM (Termina em EM)" },
+                    { word: "Parabéns", translation: "congratulations", ipa: "pa.ɾa.ˈbẽjs", hint: "pa-ra-BÉNS (Termina em ENS)" },
+                    { word: "Papéis", translation: "papers", ipa: "pa.ˈpɛjs", hint: "pa-PÉIS (Ditongo aberto ÉI)" },
+                    { word: "Chapéu", translation: "hat", ipa: "ʃa.ˈpɛw", hint: "cha-PÉU (Ditongo aberto ÉU)" },
+                    { word: "Herói", translation: "hero", ipa: "e.ˈɾɔj", hint: "he-RÓI (Ditongo aberto ÓI)" },
+                    { word: "Coração", translation: "heart", ipa: "ko.ɾa.ˈsãw", hint: "co-ra-ÇÃO (Termina em ÃO e a última sílaba é forte)" },
+                    { word: "Irmão", translation: "brother", ipa: "iʁ.ˈmãw", hint: "ir-MÃO (Termina em ÃO e a última sílaba é forte)" },
+                    { word: "Limão", translation: "lemon", ipa: "li.ˈmãw", hint: "li-MÃO" },
+                    { word: "Café", translation: "coffee", ipa: "ka.ˈfɛ", hint: "ca-FÉ" }
+                ]
+            },
+            "paroxitonas": {
+                title: "Paroxítonas",
+                rule: "A <strong>penúltima sílaba</strong> é a mais forte. É a categoria mais comum no português! Acentuam-se as terminadas em R, X, N, L, PS, Ã(S), ÃO(S), I(S), EI(S), US, UM, UNS, OM, ONS.",
+                words: [
+                    { word: "Caráter", translation: "character", ipa: "ka.ˈɾa.teʁ", hint: "ca-RÁ-ter (Termina em R)" },
+                    { word: "Cavaleiro", translation: "knight/rider", ipa: "ka.va.ˈlej.ɾu", hint: "ca-va-LEI-ro (Não acentuada, termina em O)" },
+                    { word: "Papagaio", translation: "parrot", ipa: "pa.pa.ˈɡaj.u", hint: "pa-pa-GAI-o" },
+                    { word: "Açúcar", translation: "sugar", ipa: "a.ˈsu.kaʁ", hint: "a-ÇÚ-car (Termina em R)" },
+                    { word: "Tórax", translation: "thorax", ipa: "ˈtɔ.ɾaks", hint: "TÓ-rax (Termina em X)" },
+                    { word: "Abdômen", translation: "abdomen", ipa: "ab.ˈdo.mẽ", hint: "ab-DÔ-men (Termina em N)" },
+                    { word: "Incrível", translation: "incredible", ipa: "ĩ.ˈkɾi.vew", hint: "in-CRÍ-vel (Termina em L)" },
+                    { word: "Bíceps", translation: "biceps", ipa: "ˈbi.seps", hint: "BÍ-ceps (Termina em PS)" },
+                    { word: "Ímã", translation: "magnet", ipa: "ˈi.mɐ̃", hint: "Í-mã (Termina em Ã)" },
+                    { word: "Órgão", translation: "organ", ipa: "ˈɔʁ.ɡãw", hint: "ÓR-gão (Paroxítona terminada em ÃO)" },
+                    { word: "Bênção", translation: "blessing", ipa: "ˈbẽ.sãw", hint: "BÊN-ção (Paroxítona terminada em ÃO)" },
+                    { word: "Táxi", translation: "taxi", ipa: "ˈtak.si", hint: "TÁ-xi (Termina em I)" },
+                    { word: "Grátis", translation: "free", ipa: "ˈɡɾa.tʃis", hint: "GRÁ-tis (Termina em IS)" },
+                    { word: "Bônus", translation: "bonus", ipa: "ˈbo.nus", hint: "BÔ-nus (Termina em US)" },
+                    { word: "Fórum", translation: "forum", ipa: "ˈfɔ.ɾũ", hint: "FÓ-rum (Termina em UM)" }
+                ]
+            },
+            "proparoxitonas": {
+                title: "Proparoxítonas",
+                rule: "A <strong>antepenúltima sílaba</strong> é a mais forte. Regra de ouro absoluta: <strong>TODAS as palavras proparoxítonas são acentuadas graficamente</strong> no Português.",
+                words: [
+                    { word: "Estádio", translation: "stadium", ipa: "is.ˈta.dʒju", hint: "es-TÁ-di-o" },
+                    { word: "Sílaba", translation: "syllable", ipa: "ˈsi.la.bɐ", hint: "SÍ-la-ba" },
+                    { word: "Subsídio", translation: "subsidy", ipa: "sub.ˈsi.dʒju", hint: "sub-SÍ-di-o (O S tem som de 'ss', não 'z')" },
+                    { word: "Médico", translation: "doctor", ipa: "ˈmɛ.dʒi.ku", hint: "MÉ-di-co" },
+                    { word: "Árvore", translation: "tree", ipa: "ˈaʁ.vo.ɾi", hint: "ÁR-vo-re" },
+                    { word: "Lâmpada", translation: "lamp/bulb", ipa: "ˈlɐ̃.pa.dɐ", hint: "LÂM-pa-da" },
+                    { word: "Trânsito", translation: "traffic", ipa: "ˈtɾɐ̃.zi.tu", hint: "TRÂN-si-to" },
+                    { word: "Matemática", translation: "mathematics", ipa: "ma.te.ˈma.tʃi.kɐ", hint: "ma-te-MÁ-ti-ca" },
+                    { word: "Física", translation: "physics", ipa: "ˈfi.zi.kɐ", hint: "FÍ-si-ca" },
+                    { word: "Óculos", translation: "glasses", ipa: "ˈɔ.ku.lus", hint: "Ó-cu-los" },
+                    { word: "Pássaro", translation: "bird", ipa: "ˈpa.sa.ɾu", hint: "PÁS-sa-ro" },
+                    { word: "Relâmpago", translation: "lightning", ipa: "ʁe.ˈlɐ̃.pa.ɡu", hint: "re-LÂM-pa-go" },
+                    { word: "Xícara", translation: "cup", ipa: "ˈʃi.ka.ɾɐ", hint: "XÍ-ca-ra" },
+                    { word: "Câmera", translation: "camera", ipa: "ˈkɐ.me.ɾɐ", hint: "CÂ-me-ra" },
+                    { word: "Prático", translation: "practical", ipa: "ˈpɾa.tʃi.ku", hint: "PRÁ-ti-co" }
+                ]
+            }
+        };
+
+        // App State
+        let activeCategoryKey = "oxitonas";
+        let activeWordIndex = 0;
+        let scoreCounter = { attempts: 0, successes: 0 };
+        const apiKey = ""; // Canvas runtime adds API key
+
+        // Web Speech & Media Recorder
+        let recognition = null;
+        let mediaRecorder = null;
+        let audioChunks = [];
+        let userAudioUrl = null;
+        let userAudioPlayer = null;
+        let isRecording = false;
+
+        // Sound player for TTS
+        let ttsAudioPlayer = null;
+
+        // Elements
+        const elCategoryList = document.getElementById("category-list");
+        const elRuleTitle = document.getElementById("rule-title");
+        const elRuleDescription = document.getElementById("rule-description");
+        
+        const elTargetWord = document.getElementById("target-word");
+        const elWordTranslation = document.getElementById("word-translation");
+        const elWordTip = document.getElementById("word-tip");
+        const elWordCategoryBadge = document.getElementById("word-category-badge");
+        const elWordIndexBadge = document.getElementById("word-index-badge");
+        
+        const elBtnListen = document.getElementById("btn-listen");
+        const elListenIcon = document.getElementById("listen-icon");
+        const elBtnRecord = document.getElementById("btn-record");
+        const elRecordText = document.getElementById("record-text");
+        
+        const elBtnPrev = document.getElementById("btn-prev");
+        const elBtnNext = document.getElementById("btn-next");
+        
+        // Feedback
+        const elFeedbackPanel = document.getElementById("feedback-panel");
+        const elFeedbackEmpty = document.getElementById("feedback-state-empty");
+        const elFeedbackRecording = document.getElementById("feedback-state-recording");
+        const elFeedbackResult = document.getElementById("feedback-state-result");
+        const elResultBadge = document.getElementById("result-badge");
+        const elResultTitle = document.getElementById("result-title");
+        const elUserTranscript = document.getElementById("user-transcript");
+        const elAccuracyTip = document.getElementById("accuracy-tip");
+        const elBtnPlayOwnAudio = document.getElementById("btn-play-own-audio");
+        const elBtnAiCoach = document.getElementById("btn-ai-coach");
+
+        // Drawer
+        const elAiDrawer = document.getElementById("ai-drawer");
+        const elBtnCloseDrawer = document.getElementById("btn-close-drawer");
+        const elDrawerWordText = document.getElementById("drawer-word-text");
+        const elDrawerLoading = document.getElementById("drawer-loading");
+        const elDrawerContent = document.getElementById("drawer-content");
+
+        function initAudioSystems() {
+            // Setup Speech Recognition (Text comparison)
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.lang = "pt-BR";
+                recognition.interimResults = false;
+                recognition.maxAlternatives = 1;
+
+                recognition.onstart = () => {
+                    isRecording = true;
+                    elBtnRecord.classList.add("mic-active");
+                    elBtnRecord.classList.replace("bg-red-600", "bg-red-500");
+                    elRecordText.textContent = "Gravando...";
+                    
+                    elFeedbackEmpty.classList.add("hidden");
+                    elFeedbackResult.classList.add("hidden");
+                    elFeedbackRecording.classList.remove("hidden");
+                    elBtnPlayOwnAudio.classList.add("hidden");
+                };
+
+                recognition.onend = () => {
+                    isRecording = false;
+                    elBtnRecord.classList.remove("mic-active");
+                    elBtnRecord.classList.replace("bg-red-500", "bg-red-600");
+                    elRecordText.textContent = "Gravar Palavra";
+                    elFeedbackRecording.classList.add("hidden");
+                    
+                    // Stop MediaRecorder if it's running
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                };
+
+                recognition.onerror = (event) => {
+                    console.error("Speech Recognition Error:", event.error);
+                    elFeedbackRecording.classList.add("hidden");
+                    elFeedbackResult.classList.remove("hidden");
+                    
+                    let errorMsg = "Não conseguimos ouvir. Tente falar um pouco mais alto.";
+                    if (event.error === "not-allowed") errorMsg = "Permissão ao microfone foi negada.";
+                    
+                    renderFeedbackError(errorMsg);
+                    
+                    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                    }
+                };
+
+                recognition.onresult = (event) => {
+                    const spokenText = event.results[0][0].transcript;
+                    analyzeSpeech(spokenText);
+                };
+            } else {
+                console.warn("Speech Recognition API not supported.");
+            }
+        }
+
+        async function startRecordingSequence() {
+            if (!recognition) {
+                alert("Seu navegador não suporta gravação de voz. Tente usar o Google Chrome.");
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop(); // This triggers onend, which stops mediaRecorder
+                return;
+            }
+
+            // Request raw audio for playback
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioChunks = [];
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = e => {
+                    if (e.data.size > 0) audioChunks.push(e.data);
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    userAudioUrl = URL.createObjectURL(audioBlob);
+                    elBtnPlayOwnAudio.classList.remove("hidden"); // Show playback button
+                    
+                    // Stop all microphone tracks to turn off the red dot in the browser tab
+                    stream.getTracks().forEach(track => track.stop());
+                };
+
+                mediaRecorder.start();
+                recognition.start(); // Start speech-to-text concurrently
+            } catch (err) {
+                console.error("Mic access denied for MediaRecorder", err);
+                // Fallback to just recognition if getUserMedia fails but SpeechRec works
+                recognition.start();
+            }
+        }
+
+        function analyzeSpeech(spokenText) {
+            const activeWord = getActiveWord();
+            const cleanSpoken = cleanText(spokenText);
+            const cleanTarget = cleanText(activeWord.word);
+
+            const isMatch = cleanSpoken === cleanTarget;
+            
+            scoreCounter.attempts++;
+            if (isMatch) scoreCounter.successes++;
+            updateScoreUI();
+
+            elFeedbackResult.classList.remove("hidden");
+            elUserTranscript.textContent = spokenText;
+
+            if (isMatch) {
+                elResultBadge.className = "p-3 rounded-xl text-2xl flex-shrink-0 bg-emerald-950/50 text-emerald-400 border border-emerald-900/50";
+                elResultBadge.innerHTML = `<i class="fa-solid fa-circle-check animate-bounce"></i>`;
+                elResultTitle.textContent = "Correto!";
+                elResultTitle.className = "font-bold text-lg text-emerald-400";
+                elAccuracyTip.textContent = `Você acertou! O estresse correto é ${activeWord.hint}.`;
+                triggerSuccessSound();
+            } else {
+                elResultBadge.className = "p-3 rounded-xl text-2xl flex-shrink-0 bg-amber-950/50 text-amber-400 border border-amber-900/50";
+                elResultBadge.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i>`;
+                elResultTitle.textContent = "Atenção ao estresse";
+                elResultTitle.className = "font-bold text-lg text-amber-400";
+                elAccuracyTip.textContent = `A palavra é "${activeWord.word}". Lembre-se da tônica: ${activeWord.hint}`;
+            }
+        }
+
+        function renderFeedbackError(msg) {
+            elResultBadge.className = "p-3 rounded-xl text-2xl flex-shrink-0 bg-red-950/50 text-red-400 border border-red-900/50";
+            elResultBadge.innerHTML = `<i class="fa-solid fa-microphone-slash"></i>`;
+            elResultTitle.textContent = "Erro de Áudio";
+            elResultTitle.className = "font-bold text-lg text-red-400";
+            elUserTranscript.textContent = "---";
+            elAccuracyTip.textContent = msg;
+        }
+
+        function cleanText(text) {
+            return text.toLowerCase().trim()
+                .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "")
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+        }
+
+        function getActiveWord() {
+            return pronunciationDatabase[activeCategoryKey].words[activeWordIndex];
+        }
+
+        function triggerSuccessSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+                osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch (e) { /* silent fail if audio context blocked */ }
+        }
+
+        async function playAiTTS() {
+            const activeWord = getActiveWord();
+            elListenIcon.className = "fa-solid fa-circle-notch animate-spin text-indigo-400";
+            elBtnListen.disabled = true;
+
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: `A pronúncia é: ${activeWord.word}` }] }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Sulafat" } } }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            try {
+                const response = await fetchWithRetry(url, {
+                    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+                const part = result?.candidates?.[0]?.content?.parts?.[0];
+                
+                if (part?.inlineData?.data) {
+                    const sampleRate = parseInt(part.inlineData.mimeType.match(/rate=(\d+)/)?.[1] || 24000, 10);
+                    const pcm16 = new Int16Array(base64ToArrayBuffer(part.inlineData.data));
+                    const wavBlob = pcmToWav(pcm16, sampleRate);
+                    
+                    if (ttsAudioPlayer) ttsAudioPlayer.pause();
+                    ttsAudioPlayer = new Audio(URL.createObjectURL(wavBlob));
+                    ttsAudioPlayer.play();
+                } else {
+                    triggerBrowserFallbackSpeech(activeWord.word);
+                }
+            } catch (err) {
+                triggerBrowserFallbackSpeech(activeWord.word);
+            } finally {
+                elListenIcon.className = "fa-solid fa-volume-high text-indigo-400";
+                elBtnListen.disabled = false;
+            }
+        }
+
+        function playUserAudio() {
+            if (userAudioUrl) {
+                if (userAudioPlayer) userAudioPlayer.pause();
+                userAudioPlayer = new Audio(userAudioUrl);
+                userAudioPlayer.play();
+            }
+        }
+
+        function triggerBrowserFallbackSpeech(text) {
+            if ("speechSynthesis" in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = "pt-BR";
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Helpers for TTS Audio Conversion
+        function base64ToArrayBuffer(base64) {
+            const binaryString = window.atob(base64);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+            return bytes.buffer;
+        }
+
+        function pcmToWav(pcm16Data, sampleRate) {
+            const buffer = new ArrayBuffer(44 + pcm16Data.length * 2);
+            const view = new DataView(buffer);
+            const writeString = (v, o, s) => { for(let i=0; i<s.length; i++) v.setUint8(o+i, s.charCodeAt(i)); };
+            
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + pcm16Data.length * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, sampleRate, true);
+            view.setUint32(28, sampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, pcm16Data.length * 2, true);
+
+            let offset = 44;
+            for (let i = 0; i < pcm16Data.length; i++, offset += 2) view.setInt16(offset, pcm16Data[i], true);
+            return new Blob([view], { type: 'audio/wav' });
+        }
+
+        async function fetchWithRetry(url, options, retries = 3, delay = 1000) {
+            try {
+                const res = await fetch(url, options);
+                if (!res.ok && retries > 0) throw new Error("Throttled");
+                return res;
+            } catch (err) {
+                if (retries > 0) {
+                    await new Promise(r => setTimeout(r, delay));
+                    return fetchWithRetry(url, options, retries - 1, delay * 2);
+                }
+                throw err;
+            }
+        }
+
+        async function fetchAiCoachAdvice() {
+            const activeWord = getActiveWord();
+            elAiDrawer.classList.remove("hidden");
+            setTimeout(() => elAiDrawer.classList.remove("translate-x-full"), 10);
+            
+            elDrawerWordText.textContent = activeWord.hint; // shows the separated word
+            elDrawerLoading.classList.remove("hidden");
+            elDrawerContent.classList.add("hidden");
+
+            const systemPrompt = `You are a Brazilian Portuguese phonetics coach for English speakers. Explain simply (max 2 paragraphs) how to hit the word stress (sílaba tônica) for this specific word, comparing the rhythm to English if possible.`;
+            const userQuery = `Word: "${activeWord.word}" (${activeWord.translation}). Rule: ${pronunciationDatabase[activeCategoryKey].title}. Stress separation: ${activeWord.hint}`;
+
+            try {
+                const res = await fetchWithRetry(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+                    method: "POST", headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] }
+                    })
+                });
+                
+                const data = await res.json();
+                const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (text) {
+                    elDrawerContent.innerHTML = text.split('\n\n').map(p => `<p class="mb-3">${p}</p>`).join('');
+                }
+            } catch (e) {
+                elDrawerContent.innerHTML = "<p>Connection error. Try again.</p>";
+            } finally {
+                elDrawerLoading.classList.add("hidden");
+                elDrawerContent.classList.remove("hidden");
+            }
+        }
+
+        function renderCategoryList() {
+            elCategoryList.innerHTML = "";
+            for (const key in pronunciationDatabase) {
+                const cat = pronunciationDatabase[key];
+                const isActive = key === activeCategoryKey;
+                
+                const btn = document.createElement("button");
+                btn.className = `w-full text-left p-3.5 rounded-xl border transition-all duration-200 flex flex-col gap-1 ${
+                    isActive ? "bg-indigo-600/10 border-indigo-500/50 text-indigo-300 shadow-md" : "bg-slate-900/60 border-slate-800/80 text-slate-400 hover:bg-slate-800/40"
+                }`;
+                btn.innerHTML = `
+                    <div class="flex items-center justify-between w-full">
+                        <span class="font-bold text-xs uppercase tracking-wider text-indigo-400">${cat.title}</span>
+                        <span class="text-[10px] px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700/60 text-slate-300">${cat.words.length} itens</span>
+                    </div>
+                `;
+                
+                btn.addEventListener("click", () => {
+                    activeCategoryKey = key;
+                    activeWordIndex = 0;
+                    renderCategoryList();
+                    renderActiveWord();
+                    resetFeedbackPanel();
+                });
+                elCategoryList.appendChild(btn);
+            }
+        }
+
+        function renderActiveWord() {
+            const currentCat = pronunciationDatabase[activeCategoryKey];
+            const activeWord = currentCat.words[activeWordIndex];
+
+            // Update Rule UI
+            elRuleTitle.textContent = currentCat.title;
+            elRuleDescription.innerHTML = currentCat.rule;
+
+            // Update Stage
+            elTargetWord.textContent = activeWord.word;
+            elWordTranslation.textContent = `"${activeWord.translation}"  •  /${activeWord.ipa}/`;
+            elWordTip.textContent = activeWord.hint;
+            elWordCategoryBadge.textContent = currentCat.title;
+            elWordIndexBadge.textContent = `Palavra ${activeWordIndex + 1} de ${currentCat.words.length}`;
+
+            elBtnPrev.disabled = activeWordIndex === 0;
+            elBtnNext.disabled = activeWordIndex === currentCat.words.length - 1;
+        }
+
+        function resetFeedbackPanel() {
+            elFeedbackEmpty.classList.remove("hidden");
+            elFeedbackRecording.classList.add("hidden");
+            elFeedbackResult.classList.add("hidden");
+            elBtnPlayOwnAudio.classList.add("hidden");
+            userAudioUrl = null;
+        }
+
+        function updateScoreUI() {
+            let total = 0;
+            for (const k in pronunciationDatabase) total += pronunciationDatabase[k].words.length;
+            document.getElementById("progress-count").textContent = `${scoreCounter.attempts} de ${total}`;
+            document.getElementById("score-text").textContent = scoreCounter.attempts > 0 
+                ? `${Math.round((scoreCounter.successes / scoreCounter.attempts) * 100)}%` : "0%";
+        }
+
+        // Event Listeners
+        elBtnListen.addEventListener("click", playAiTTS);
+        elBtnRecord.addEventListener("click", startRecordingSequence);
+        elBtnPlayOwnAudio.addEventListener("click", playUserAudio);
+        
+        elBtnPrev.addEventListener("click", () => {
+            if (activeWordIndex > 0) { activeWordIndex--; renderActiveWord(); resetFeedbackPanel(); }
+        });
+        elBtnNext.addEventListener("click", () => {
+            if (activeWordIndex < pronunciationDatabase[activeCategoryKey].words.length - 1) {
+                activeWordIndex++; renderActiveWord(); resetFeedbackPanel();
+            }
+        });
+        
+        elBtnAiCoach.addEventListener("click", fetchAiCoachAdvice);
+        elBtnCloseDrawer.addEventListener("click", () => {
+            elAiDrawer.classList.add("translate-x-full");
+            setTimeout(() => elAiDrawer.classList.add("hidden"), 300);
+        });
+
+        // Init
+        window.onload = () => {
+            initAudioSystems();
+            renderCategoryList();
+            renderActiveWord();
+            updateScoreUI();
+        };
+    </script>
+</body>
+</html>
