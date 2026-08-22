@@ -173,11 +173,6 @@
 
     </main>
 
-    <!-- FOOTER -->
-    <footer class="border-t border-slate-800 py-4 px-6 text-center text-xs text-slate-500 bg-slate-950/20">
-        <p>© 2026 Word Stress Lab. Built for strict pronunciation and accent accuracy.</p>
-    </footer>
-
     <script>
         // Database with English Rules and Strict Mispronunciation Triggers
         const pronunciationDatabase = {
@@ -186,7 +181,7 @@
                 rule: "The <strong>last syllable</strong> is the stressed one. We use written accents when they end in: A(S), E(S), O(S), EM, ENS, and open diphthongs ÉI, ÉU, ÓI.",
                 words: [
                     { word: "Metrô", translation: "subway", ipa: "me.ˈtɾo", hint: "me-TRÔ", mistakes: { "metro": "It sounds like you said 'metro' (ME-tro). Remember, the stress is at the end: me-TRÔ.", "metró": "You opened the vowel (me-TRÓ). It needs to be closed: me-TRÔ." } },
-                    { word: "Suflê", translation: "soufflé", ipa: "su.ˈfle", hint: "su-FLÊ", mistakes: { "sufle": "Make sure to push the stress to the very end with a closed vowel: su-FLÊ." } },
+                    { word: "Suflê", translation: "soufflé", ipa: "su.ˈfle", hint: "su-FLÊ", mistakes: { "soufflé": "You used the French/English pronunciation with an open 'é'. In Portuguese, we use a closed 'ê': su-FLÊ.", "souffle": "Make sure to push the stress to the very end with a closed vowel: su-FLÊ.", "suflé": "You opened the vowel (su-FLÉ). It needs to be a closed sound: su-FLÊ.", "sufle": "Push the stress to the end: su-FLÊ." } },
                     { word: "Supor", translation: "to suppose", ipa: "su.ˈpoʁ", hint: "su-POR", mistakes: { "súpor": "Don't stress the U! Push the energy to the end: su-POR.", "super": "You stressed the first syllable so the AI heard 'super'. Push the energy to the end: su-POR." } },
                     { word: "Sabiá", translation: "thrush (bird)", ipa: "sa.bi.ˈa", hint: "sa-bi-Á", mistakes: { "sábia": "You said 'sábia' (wise woman - stress on SA). Stress the A at the end: sa-bi-Á.", "sabia": "You said 'sabia' (I knew - stress on BI). Hit the last syllable hard: sa-bi-Á." } },
                     { word: "Bebê", translation: "baby", ipa: "be.ˈbe", hint: "be-BÊ", mistakes: { "bebe": "You said 'bebe' (he/she drinks). For baby, stress the closed Ê at the end: be-BÊ.", "bebé": "You opened the vowel too much. Keep it closed: be-BÊ." } },
@@ -246,7 +241,6 @@
             }
         };
 
-        // App State
         let activeCategoryKey = "oxitonas";
         let activeWordIndex = 0;
         let scoreCounter = { attempts: 0, successes: 0 };
@@ -261,7 +255,6 @@
         let ttsAudioPlayer = null;
         let isRecording = false;
 
-        // Elements
         const elCategoryList = document.getElementById("category-list");
         const elRuleTitle = document.getElementById("rule-title");
         const elRuleDescription = document.getElementById("rule-description");
@@ -393,7 +386,7 @@
         function analyzeSpeech(spokenText) {
             const activeWord = getActiveWord();
             
-            // WE KEEP ACCENTS HERE to strictly compare open/closed vowels and stress
+            // STRICT CLEANING: We KEEP accents here to strictly compare open/closed vowels and stress
             const cleanSpoken = cleanTextKeepAccents(spokenText);
             const cleanTarget = cleanTextKeepAccents(activeWord.word);
 
@@ -411,7 +404,7 @@
                 elResultBadge.innerHTML = `<i class="fa-solid fa-circle-check animate-bounce"></i>`;
                 elResultTitle.textContent = "Excellent!";
                 elResultTitle.className = "font-bold text-lg text-emerald-400";
-                elAccuracyTip.textContent = `Perfect word stress! You hit ${activeWord.hint} perfectly.`;
+                elAccuracyTip.textContent = `Perfect word stress and vowel sound! You hit ${activeWord.hint} perfectly.`;
                 triggerSuccessSound();
             } else {
                 elResultBadge.className = "p-3 rounded-xl text-2xl flex-shrink-0 bg-amber-950/50 text-amber-400 border border-amber-900/50";
@@ -419,19 +412,30 @@
                 elResultTitle.textContent = "Almost there! Let's gently adjust.";
                 elResultTitle.className = "font-bold text-lg text-amber-400";
                 
-                // 1. Check for specific known mistakes (e.g., sábia instead of sabiá)
+                // 1. Check for specific known mistakes (foreign transcriptions, etc.)
                 if (activeWord.mistakes && activeWord.mistakes[cleanSpoken]) {
                     elAccuracyTip.textContent = activeWord.mistakes[cleanSpoken];
                 } else {
-                    // 2. THE SMART COMPARATOR: Strips accents to see if they got the base letters right
+                    // 2. THE SMART VOWEL COMPARATOR
                     const spokenNoAccents = removeAccents(cleanSpoken);
                     const targetNoAccents = removeAccents(cleanTarget);
 
                     if (spokenNoAccents === targetNoAccents) {
-                        // They said the right word, but with the wrong stress/vowel openness!
-                        elAccuracyTip.textContent = `You said '${spokenText}', but the correct word is '${activeWord.word}'. Pay close attention to the open/closed vowels and the stressed syllable! (${activeWord.hint})`;
+                        // Base letters match, but accents (open/closed) differ. Let's provide specific feedback!
+                        if (cleanSpoken.includes('é') && cleanTarget.includes('ê')) {
+                            elAccuracyTip.textContent = `You used an open 'é' sound. In this word, you must use a closed 'ê' sound: ${activeWord.hint}`;
+                        } else if (cleanSpoken.includes('ê') && cleanTarget.includes('é')) {
+                            elAccuracyTip.textContent = `You used a closed 'ê' sound. In this word, you must use an open 'é' sound: ${activeWord.hint}`;
+                        } else if (cleanSpoken.includes('ó') && cleanTarget.includes('ô')) {
+                            elAccuracyTip.textContent = `You used an open 'ó' sound. In this word, you must use a closed 'ô' sound: ${activeWord.hint}`;
+                        } else if (cleanSpoken.includes('ô') && cleanTarget.includes('ó')) {
+                            elAccuracyTip.textContent = `You used a closed 'ô' sound. In this word, you must use an open 'ó' sound: ${activeWord.hint}`;
+                        } else {
+                            // Fallback for stress mismatch without explicit open/closed mapping
+                            elAccuracyTip.textContent = `You said '${spokenText}', but the correct word is '${activeWord.word}'. Pay close attention to the open/closed vowels and the stressed syllable! (${activeWord.hint})`;
+                        }
                     } else {
-                        // Generic error
+                        // Generic error (word wasn't fully understood or is completely wrong)
                         elAccuracyTip.textContent = `You said '${spokenText}'. Keep the stress rule in mind: ${activeWord.hint}. Try again!`;
                     }
                 }
