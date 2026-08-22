@@ -150,7 +150,7 @@
                         <div class="space-y-2">
                             <h3 id="result-title" class="font-bold text-lg">Resultado</h3>
                             <p class="text-sm text-slate-400">Speech recognized: <span id="user-transcript" class="text-slate-100 font-bold underline decoration-indigo-500">...</span></p>
-                            <p id="accuracy-tip" class="text-xs text-slate-300 leading-relaxed">Dica...</p>
+                            <p id="accuracy-tip" class="text-sm text-slate-300 leading-relaxed font-medium">Dica...</p>
                             
                             <button id="btn-play-own-audio" class="mt-2 bg-emerald-900/40 hover:bg-emerald-800/60 text-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 border border-emerald-800 transition-colors hidden">
                                 <i class="fa-solid fa-play"></i> Play my own audio
@@ -175,31 +175,31 @@
 
     <!-- FOOTER -->
     <footer class="border-t border-slate-800 py-4 px-6 text-center text-xs text-slate-500 bg-slate-950/20">
-        <p>© 2026 Word Stress Lab. Built for pronunciation accuracy.</p>
+        <p>© 2026 Word Stress Lab. Built for strict pronunciation and accent accuracy.</p>
     </footer>
 
     <script>
-        // Database with English Rules and Specific Mispronunciation Triggers
+        // Database with English Rules and Strict Mispronunciation Triggers
         const pronunciationDatabase = {
             "oxitonas": {
                 title: "Oxítonas (Last Syllable)",
                 rule: "The <strong>last syllable</strong> is the stressed one. We use written accents when they end in: A(S), E(S), O(S), EM, ENS, and open diphthongs ÉI, ÉU, ÓI.",
                 words: [
-                    { word: "Metrô", translation: "subway", ipa: "me.ˈtɾo", hint: "me-TRÔ", mistakes: { "metro": "It sounds like you said 'metro' (ME-tro). Remember, the stress is at the end: me-TRÔ." } },
+                    { word: "Metrô", translation: "subway", ipa: "me.ˈtɾo", hint: "me-TRÔ", mistakes: { "metro": "It sounds like you said 'metro' (ME-tro). Remember, the stress is at the end: me-TRÔ.", "metró": "You opened the vowel (me-TRÓ). It needs to be closed: me-TRÔ." } },
                     { word: "Suflê", translation: "soufflé", ipa: "su.ˈfle", hint: "su-FLÊ", mistakes: { "sufle": "Make sure to push the stress to the very end with a closed vowel: su-FLÊ." } },
-                    { word: "Supor", translation: "to suppose", ipa: "su.ˈpoʁ", hint: "su-POR", mistakes: { "súpor": "Don't stress the U! Push the energy to the end: su-POR." } },
-                    { word: "Sabiá", translation: "thrush (bird)", ipa: "sa.bi.ˈa", hint: "sa-bi-Á", mistakes: { "sábia": "You pronounced 'sábia' (wise woman). For the bird, put the stress on the A: sa-bi-Á.", "sabia": "You pronounced 'sabia' (I knew). Hit the last syllable hard: sa-bi-Á." } },
-                    { word: "Bebê", translation: "baby", ipa: "be.ˈbe", hint: "be-BÊ", mistakes: { "bebe": "You said 'bebe' (he/she drinks). For baby, stress the closed Ê at the end: be-BÊ." } },
-                    { word: "Avó", translation: "grandmother", ipa: "a.ˈvɔ", hint: "a-VÓ", mistakes: { "avo": "Don't forget to open the O fully at the end: a-VÓ." } },
+                    { word: "Supor", translation: "to suppose", ipa: "su.ˈpoʁ", hint: "su-POR", mistakes: { "súpor": "Don't stress the U! Push the energy to the end: su-POR.", "super": "You stressed the first syllable so the AI heard 'super'. Push the energy to the end: su-POR." } },
+                    { word: "Sabiá", translation: "thrush (bird)", ipa: "sa.bi.ˈa", hint: "sa-bi-Á", mistakes: { "sábia": "You said 'sábia' (wise woman - stress on SA). Stress the A at the end: sa-bi-Á.", "sabia": "You said 'sabia' (I knew - stress on BI). Hit the last syllable hard: sa-bi-Á." } },
+                    { word: "Bebê", translation: "baby", ipa: "be.ˈbe", hint: "be-BÊ", mistakes: { "bebe": "You said 'bebe' (he/she drinks). For baby, stress the closed Ê at the end: be-BÊ.", "bebé": "You opened the vowel too much. Keep it closed: be-BÊ." } },
+                    { word: "Avó", translation: "grandmother", ipa: "a.ˈvɔ", hint: "a-VÓ", mistakes: { "avô": "You closed the vowel (grandfather). Open it fully at the end: a-VÓ.", "avo": "Push the stress to the end: a-VÓ." } },
                     { word: "Armazém", translation: "warehouse", ipa: "aʁ.ma.ˈzẽj", hint: "ar-ma-ZÉM", mistakes: { "armazem": "Don't flatten it. The stress goes to the end: ar-ma-ZÉM." } },
                     { word: "Parabéns", translation: "congratulations", ipa: "pa.ɾa.ˈbẽjs", hint: "pa-ra-BÉNS", mistakes: { "parabens": "Put the energy on the last syllable: BÉNS." } },
                     { word: "Papéis", translation: "papers", ipa: "pa.ˈpɛjs", hint: "pa-PÉIS", mistakes: { "papeis": "Open the vowel E out wide at the end: pa-PÉIS." } },
-                    { word: "Chapéu", translation: "hat", ipa: "ʃa.ˈpɛw", hint: "cha-PÉU", mistakes: { "chapeu": "You closed the vowel (cha-PEU). Open your mouth wide on the E: cha-PÉU." } },
+                    { word: "Chapéu", translation: "hat", ipa: "ʃa.ˈpɛw", hint: "cha-PÉU", mistakes: { "chapeu": "You closed the vowel. Open your mouth wide on the E: cha-PÉU.", "chapêu": "The circumflex accent (^) closes the sound. You need the acute accent (´) for an open sound: cha-PÉU." } },
                     { word: "Herói", translation: "hero", ipa: "e.ˈɾɔj", hint: "he-RÓI", mistakes: { "heroi": "Make the O open and stressed at the end: he-RÓI." } },
                     { word: "Coração", translation: "heart", ipa: "ko.ɾa.ˈsãw", hint: "co-ra-ÇÃO", mistakes: { "coracao": "Don't forget the nasal -ão at the end, which is also the stressed syllable: co-ra-ÇÃO." } },
                     { word: "Irmão", translation: "brother", ipa: "iʁ.ˈmãw", hint: "ir-MÃO", mistakes: { "írmao": "You stressed the first syllable. Push it to the end: ir-MÃO.", "irmao": "Make sure the nasal sound receives the stress: ir-MÃO." } },
                     { word: "Limão", translation: "lemon", ipa: "li.ˈmãw", hint: "li-MÃO", mistakes: { "límao": "Don't stress the 'li'. The stress goes to the nasal sound: li-MÃO." } },
-                    { word: "Café", translation: "coffee", ipa: "ka.ˈfɛ", hint: "ca-FÉ", mistakes: { "cáfe": "You said CA-fe (like in English). In Portuguese, the stress is at the end: ca-FÉ." } }
+                    { word: "Café", translation: "coffee", ipa: "ka.ˈfɛ", hint: "ca-FÉ", mistakes: { "cáfe": "You said CÁ-fe (like in English). In Portuguese, the stress is at the end: ca-FÉ.", "cafe": "Don't forget to push the stress to the end: ca-FÉ." } }
                 ]
             },
             "paroxitonas": {
@@ -250,7 +250,7 @@
         let activeCategoryKey = "oxitonas";
         let activeWordIndex = 0;
         let scoreCounter = { attempts: 0, successes: 0 };
-        const apiKey = ""; // Canvas runtime adds API key
+        const apiKey = ""; 
 
         // Audio and STT
         let recognition = null;
@@ -362,12 +362,10 @@
             }
 
             if (isRecording) {
-                // STOP recording triggered manually by user
                 recognition.stop(); 
                 return;
             }
 
-            // START recording sequence
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 audioChunks = [];
@@ -388,15 +386,14 @@
                 recognition.start();
             } catch (err) {
                 console.error("Mic access denied for MediaRecorder", err);
-                recognition.start(); // Fallback if MediaRecorder fails but STT is okay
+                recognition.start(); // Fallback if MediaRecorder fails
             }
         }
 
         function analyzeSpeech(spokenText) {
             const activeWord = getActiveWord();
             
-            // STRICT CLEANING: We do NOT remove accents anymore. 
-            // We want "sábia" to fail if the target is "sabiá".
+            // WE KEEP ACCENTS HERE to strictly compare open/closed vowels and stress
             const cleanSpoken = cleanTextKeepAccents(spokenText);
             const cleanTarget = cleanTextKeepAccents(activeWord.word);
 
@@ -422,11 +419,21 @@
                 elResultTitle.textContent = "Almost there! Let's gently adjust.";
                 elResultTitle.className = "font-bold text-lg text-amber-400";
                 
-                // Check if user made a known specific mistake (e.g. said "sábia" instead of "sabiá")
+                // 1. Check for specific known mistakes (e.g., sábia instead of sabiá)
                 if (activeWord.mistakes && activeWord.mistakes[cleanSpoken]) {
                     elAccuracyTip.textContent = activeWord.mistakes[cleanSpoken];
                 } else {
-                    elAccuracyTip.textContent = `You said '${spokenText}'. Keep the stress rule in mind: ${activeWord.hint}. Try again!`;
+                    // 2. THE SMART COMPARATOR: Strips accents to see if they got the base letters right
+                    const spokenNoAccents = removeAccents(cleanSpoken);
+                    const targetNoAccents = removeAccents(cleanTarget);
+
+                    if (spokenNoAccents === targetNoAccents) {
+                        // They said the right word, but with the wrong stress/vowel openness!
+                        elAccuracyTip.textContent = `You said '${spokenText}', but the correct word is '${activeWord.word}'. Pay close attention to the open/closed vowels and the stressed syllable! (${activeWord.hint})`;
+                    } else {
+                        // Generic error
+                        elAccuracyTip.textContent = `You said '${spokenText}'. Keep the stress rule in mind: ${activeWord.hint}. Try again!`;
+                    }
                 }
             }
         }
@@ -440,9 +447,14 @@
             elAccuracyTip.textContent = msg;
         }
 
+        // Keeps accents for strict matching
         function cleanTextKeepAccents(text) {
-            // Lowercase and trim. Remove punctuation. DO NOT remove accents.
             return text.toLowerCase().trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()?]/g, "");
+        }
+
+        // Removes accents for the smart comparator fallback
+        function removeAccents(text) {
+            return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
         }
 
         function getActiveWord() {
